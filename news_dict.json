@@ -1,14 +1,4 @@
 {
-    "bitcoin-price-targets-55000-bull-pennant": {
-        "article_date_timestamp": 1707346800.0,
-        "article_title": "Bitcoin Price Targets $55,000 Following Bull Pennant Breakout",
-        "article_url": "https://www.newsbtc.com/news/bitcoin/bitcoin-price-targets-55000-bull-pennant/"
-    },
-    "bitcoin-nears-45000-level-in-historic-price-surge-following-spot-etf-debut": {
-        "article_date_timestamp": 1707346800.0,
-        "article_title": "Bitcoin Nears $45,000 Level In Historic Price Surge Following Spot ETF Debut",
-        "article_url": "https://www.newsbtc.com/news/bitcoin-nears-45000-level-in-historic-price-surge-following-spot-etf-debut/"
-    },
     "cardano-ada-and-internet-computer-icp-holders-rush-to-buy-into-the-new-kelexo-klxo-presale-as-analyst-predict-20x-in-2024": {
         "article_date_timestamp": 1707346800.0,
         "article_title": "Cardano (ADA) and Internet Computer (ICP) Holders Rush to Buy Into the New Kelexo (KLXO) Presale as Analyst Predict 20X in 2024",
@@ -58,5 +48,15 @@
         "article_date_timestamp": 1707260400.0,
         "article_title": "Cardano Activity Sees New Life That Could Send ADA Price Soaring, Here Are The Targets",
         "article_url": "https://www.newsbtc.com/news/cardano/cardano-activity-ada-price-soaring/"
+    },
+    "bitcoin-price-targets-55000-bull-pennant": {
+        "article_date_timestamp": 1707346800.0,
+        "article_title": "Bitcoin Price Targets $55,000 Following Bull Pennant Breakout",
+        "article_url": "https://www.newsbtc.com/news/bitcoin/bitcoin-price-targets-55000-bull-pennant/"
+    },
+    "bitcoin-nears-45000-level-in-historic-price-surge-following-spot-etf-debut": {
+        "article_date_timestamp": 1707346800.0,
+        "article_title": "Bitcoin Nears $45,000 Level In Historic Price Surge Following Spot ETF Debut",
+        "article_url": "https://www.newsbtc.com/news/bitcoin-nears-45000-level-in-historic-price-surge-following-spot-etf-debut/"
     }
 }

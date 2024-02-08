@@ -19,6 +19,7 @@ def get_first_news():
 
 
     news_dict = {}
+
     for article in jeg_posts:
         article_title = article.find(class_= 'jeg_post_title').text.strip()
 
@@ -45,8 +46,51 @@ def get_first_news():
     with open('news_dict.json','w') as file:
         json.dump(news_dict,file,indent=4,ensure_ascii=False)
 
+def check_news_update():
+    with open('news_dict.json') as file:
+        news_dict = json.load(file)
+    headers = {
+         'user-agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
+    }
+    url = 'https://www.newsbtc.com/news/'
+
+    r = requests.get(url=url, headers=headers)
+
+    soup = BeautifulSoup(r.text, 'lxml')
+
+    jeg_posts = soup.find_all('article', class_='jeg_post')
+    fresh_news = {}
+    for article in jeg_posts:
+        a_tag = article.find('div', class_='jeg_thumb').find('a')
+        article_url = a_tag.get('href')
+        article_id = article_url.split('/')[-2]
+
+        if article_id in news_dict:
+            continue
+        else:
+            article_title = article.find(class_= 'jeg_post_title').text.strip()
+
+            article_date = article.find('div', class_= 'jeg_meta_date').text.strip()
+            date_from_str = datetime.strptime(article_date, "%B %d, %Y")
+            article_date_timestamp = time.mktime(date_from_str.timetuple())
+
+            news_dict[article_id] = {
+                'article_date_timestamp': article_date_timestamp,
+                'article_title': article_title,
+                'article_url': article_url,
+            }
+            fresh_news[article_id] = {
+                'article_date_timestamp': article_date_timestamp,
+                'article_title': article_title,
+                'article_url': article_url,
+            }
+    with open('news_dict.json','w') as file:
+        json.dump(news_dict,file,indent=4,ensure_ascii=False)
+    return fresh_news
+
 def main():
-    get_first_news()
+    # get_first_news()
+    print(check_news_update())
 
 if  __name__ == '__main__':
     main()
