@@ -4,8 +4,6 @@ import asyncio
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import CommandStart, Command
 from subscriptions_manager import SubscriptionsManager
-
-
 TOKEN = os.getenv("BOT_TOKEN")
 
 # Check if the token is set
@@ -24,6 +22,7 @@ bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
 db = SubscriptionsManager('subscriptions.db')
+
 
 @dp.message(CommandStart())
 async def start_cmd(message: types.Message):
@@ -71,9 +70,10 @@ async def unsubscribe(message: types.Message):
         await message.answer("You have successfully unsubscribed from the newsletter.")
 
 
+
+
 async def main():
-    # Start the bot
     await dp.start_polling(bot)
 
-
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())
