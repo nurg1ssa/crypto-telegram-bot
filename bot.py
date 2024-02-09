@@ -1,13 +1,13 @@
 import logging
 import os
 import asyncio
-import requests
 import datetime
-from aiogram.types import InputFile
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import CommandStart, Command
+from bs4 import BeautifulSoup
+import requests
 from subscriptions_manager import SubscriptionsManager
-from aiogram.utils.markdown import hbold, hunderline, hcode, hlink
+from aiogram.utils.markdown import hbold, hlink
 from news import check_news_update
 
 TOKEN = os.getenv("BOT_TOKEN")
@@ -34,21 +34,16 @@ db = SubscriptionsManager('subscriptions.db')
 async def start_cmd(message: types.Message):
     # Send a welcome message when users start interacting with the bot
     await message.answer("""
-👋 Hello and welcome to the Bitcoin Monitor Bot! 🚀
+    👋 Hello and welcome to the Bitcoin Monitor Bot! 🚀
 
 I'm here to keep you updated on the latest Bitcoin prices and provide valuable insights into the cryptocurrency market. Whether you're a seasoned investor or just curious about Bitcoin, I've got you covered!
 
-📈 **Current Bitcoin Price:**
+💰 **Current Bitcoin Price:**
 Just type /price to get the most recent Bitcoin price.
 
-📊 **Market Insights:**
-Use /stats to access detailed market statistics and trends.
-
-📅 **Historical Data:**
-For historical data, simply type /history followed by the desired time frame.
-
-🔔 **Price Alerts:**
-Set up price alerts with /setalert to receive notifications when Bitcoin hits your specified threshold.
+📰 **Newsletter Subscription:**
+Subscribe to our newsletter with /subscribe to receive the latest news and updates in the cryptocurrency world.
+Unsubscribe from the newsletter anytime using /unsubscribe.
 
 Feel free to explore the various commands, and don't hesitate to ask if you have any questions. Happy monitoring! 🌐💰
     """)
@@ -74,6 +69,33 @@ async def unsubscribe(message: types.Message):
         # If they already exist, update their subscription status
         db.update_subscription(message.from_user.id, False)
         await message.answer("You have successfully unsubscribed from the newsletter.")
+
+
+@dp.message(Command('price'))
+async def price(message: types.Message):
+    headers = {
+        'user-agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
+    }
+    url = 'https://www.binance.com/en'
+
+    r = requests.get(url=url, headers=headers)
+
+    soup = BeautifulSoup(r.text, 'lxml')
+    prices = soup.find_all('a', class_='css-sujoqu')
+    price_message = "<b>Cryptocurrency Prices:</b>\n\n"
+    for price in prices:
+        cryptoName = price.find('div', class_='css-1ev4kiq').text.strip()
+        # Make cryptoName bold
+        cryptoName_bold = hbold(cryptoName)
+        cryptoPrice = price.find('div', class_='coinRow-coinPrice').text.strip()
+        cryptoGrowth = price.find('div', class_='css-k2pbmh').text.strip()
+        # Append crypto information to the message
+        price_message += f"{cryptoName_bold}: {cryptoPrice}({cryptoGrowth})\n\n"
+    
+    # Send the message
+    await message.answer(price_message, parse_mode="HTML")
+
+
 
 async def news_every_minute():
     while True:
