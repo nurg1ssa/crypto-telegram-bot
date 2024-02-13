@@ -102,22 +102,22 @@ async def news_every_minute():
         fresh_news = check_news_update()
 
         if len(fresh_news) >= 1:
+            print("Fresh news found:", fresh_news)  # Print fresh news for debugging
             for k, v in sorted(fresh_news.items()):
-                # Format the date
                 formatted_date = datetime.datetime.fromtimestamp(v['article_date_timestamp']).strftime('%d.%m.%Y')
-
-                # Create the HTML-like formatted caption
                 caption = f"<b>{formatted_date}</b>\n\n{hbold(v['article_title'])}\n\n{hlink('Read More', v['article_url'])}"
-
-                # Send the message with the photo and caption
                 subscribers = db.get_subscriptions()
+                print("Subscribers:", subscribers)  # Print subscribers for debugging
                 for subscriber in subscribers:
                     try:
+                        print("Sending message to:", subscriber[1])  # Print subscriber for debugging
                         await bot.send_photo(subscriber[1], v['article_image'], caption=caption, disable_notification=False, parse_mode="HTML")
+                        print("Message sent successfully.")
                     except Exception as e:
                         print(f"Error sending message: {e}")
 
         await asyncio.sleep(40)
+
 
 async def main():
     loop = asyncio.get_event_loop()

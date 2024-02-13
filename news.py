@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 import time 
+import os
 import json
 
 def get_first_news():
@@ -52,8 +53,11 @@ def get_first_news():
         json.dump(news_dict,file,indent=4,ensure_ascii=False)
 
 def check_news_update():
-    with open('news_dict.json') as file:
-        news_dict = json.load(file)
+    news_dict = {}
+    if os.path.exists('news_dict.json'):
+        with open('news_dict.json') as file:
+            news_dict = json.load(file)
+    
     headers = {
          'user-agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
     }
@@ -64,41 +68,39 @@ def check_news_update():
     soup = BeautifulSoup(r.text, 'lxml')
 
     jeg_posts = soup.find_all('article', class_='jeg_post')
-    fresh_news = {}
+    latest_news = None
     for article in jeg_posts:
         a_tag = article.find('div', class_='jeg_thumb').find('a')
         article_url = a_tag.get('href')
         article_id = article_url.split('/')[-2]
 
-        if article_id in news_dict:
-            continue
+        article_title = article.find(class_= 'jeg_post_title').text.strip()
+        article_date = article.find('div', class_= 'jeg_meta_date').text.strip()
+        date_from_str = datetime.strptime(article_date, "%B %d, %Y")
+        article_date_timestamp = time.mktime(date_from_str.timetuple())
+        article_div = article.find("div", class_="thumbnail-container").find('img')  # Find the div containing the image
+        if article_div:
+            article_img =  article_div.get('data-src')
         else:
-            article_title = article.find(class_= 'jeg_post_title').text.strip()
-            
-            article_date = article.find('div', class_= 'jeg_meta_date').text.strip()
-            date_from_str = datetime.strptime(article_date, "%B %d, %Y")
-            article_date_timestamp = time.mktime(date_from_str.timetuple())
-            article_div = article.find("div", class_="thumbnail-container").find('img')  # Find the div containing the image
-            if article_div:
-                article_img =  article_div.get('data-src')
-            else:
-                article_img = article.find("div", class_="thumbnail-container").get('data-src')
+            article_img = article.find("div", class_="thumbnail-container").get('data-src')
 
-            news_dict[article_id] = {
-                'article_date_timestamp': article_date_timestamp,
-                'article_title': article_title,
-                'article_url': article_url,
-                'article_image': article_img,
+        if article_id not in news_dict or news_dict.get(article_id, {}).get('article_date_timestamp', 0) < article_date_timestamp:
+            news_dict = {
+                article_id: {
+                    'article_date_timestamp': article_date_timestamp,
+                    'article_title': article_title,
+                    'article_url': article_url,
+                    'article_image': article_img,
+                }
             }
-            fresh_news[article_id] = {
-                'article_date_timestamp': article_date_timestamp,
-                'article_title': article_title,
-                'article_url': article_url,
-                'article_image': article_img,
-            }
+            latest_news = news_dict[article_id]
+
     with open('news_dict.json','w') as file:
         json.dump(news_dict,file,indent=4,ensure_ascii=False)
-    return fresh_news
+    
+    return {article_id: latest_news} if latest_news else {}  # Return the latest news as a dictionary
+
+
 
 def main():
     # get_first_news()
