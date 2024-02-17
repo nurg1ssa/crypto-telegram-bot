@@ -3,11 +3,11 @@ import os
 import asyncio
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import CommandStart, Command
-from currency import price
-from subscriptions_manager import SubscriptionsManager
+from parsing.currency import price
+from subscription.subscriptions_manager import SubscriptionsManager
 
-from news import news_every_minute
-from pay import donate
+from parsing.news import news_every_minute
+from handlers.pay import donate
 from aiogram.types import PreCheckoutQuery
 
 TOKEN = os.getenv("BOT_TOKEN")
@@ -28,7 +28,7 @@ bot = Bot(token=TOKEN)
 # Initialize dispatcher
 dp = Dispatcher()
 
-db = SubscriptionsManager('subscriptions.db')
+db = SubscriptionsManager('./subscription/subscriptions.db')
 
 @dp.message(CommandStart())
 async def start_cmd(message: types.Message):
