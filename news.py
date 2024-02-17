@@ -1,9 +1,13 @@
+import asyncio
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 import time 
 import os
 import json
+from subscriptions_manager import SubscriptionsManager
+from aiogram.utils.markdown import hbold, hlink
+db = SubscriptionsManager('subscriptions.db')
 
 def get_first_news():
     headers = {
@@ -100,6 +104,27 @@ def check_news_update():
     
     return {article_id: latest_news} if latest_news else {}  # Return the latest news as a dictionary
 
+
+async def news_every_minute(bot):
+    while True:
+        fresh_news = check_news_update()
+
+        if len(fresh_news) >= 1:
+            print("Fresh news found:", fresh_news)  # Print fresh news for debugging
+            for k, v in sorted(fresh_news.items()):
+                formatted_date = datetime.fromtimestamp(v['article_date_timestamp']).strftime('%d.%m.%Y')
+                caption = f"<b>{formatted_date}</b>\n\n{hbold(v['article_title'])}\n\n{hlink('Read More', v['article_url'])}"
+                subscribers = db.get_subscriptions()
+                print("Subscribers:", subscribers)  # Print subscribers for debugging
+                for subscriber in subscribers:
+                    try:
+                        print("Sending message to:", subscriber[1])  # Print subscriber for debugging
+                        await bot.send_photo(subscriber[1], v['article_image'], caption=caption, disable_notification=False, parse_mode="HTML")
+                        print("Message sent successfully.")
+                    except Exception as e:
+                        print(f"Error sending message: {e}")
+
+        await asyncio.sleep(60)
 
 
 def main():

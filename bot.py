@@ -1,16 +1,17 @@
 import logging
 import os
 import asyncio
-import datetime
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import CommandStart, Command
-from bs4 import BeautifulSoup
-import requests
+from currency import price
 from subscriptions_manager import SubscriptionsManager
-from aiogram.utils.markdown import hbold, hlink
-from news import check_news_update
+
+from news import news_every_minute
+from pay import donate
+from aiogram.types import PreCheckoutQuery
 
 TOKEN = os.getenv("BOT_TOKEN")
+
 
 # Check if the token is set
 if TOKEN is None:
@@ -28,7 +29,6 @@ bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
 db = SubscriptionsManager('subscriptions.db')
-
 
 @dp.message(CommandStart())
 async def start_cmd(message: types.Message):
@@ -72,56 +72,26 @@ async def unsubscribe(message: types.Message):
 
 
 @dp.message(Command('price'))
-async def price(message: types.Message):
-    headers = {
-        'user-agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
-    }
-    url = 'https://www.binance.com/en'
-
-    r = requests.get(url=url, headers=headers)
-
-    soup = BeautifulSoup(r.text, 'lxml')
-    prices = soup.find_all('a', class_='css-sujoqu')
-    price_message = "<b>Cryptocurrency Prices:</b>\n\n"
-    for price in prices:
-        cryptoName = price.find('div', class_='css-1ev4kiq').text.strip()
-        # Make cryptoName bold
-        cryptoName_bold = hbold(cryptoName)
-        cryptoPrice = price.find('div', class_='coinRow-coinPrice').text.strip()
-        cryptoGrowth = price.find('div', class_='css-k2pbmh').text.strip()
-        # Append crypto information to the message
-        price_message += f"{cryptoName_bold}: {cryptoPrice}({cryptoGrowth})\n\n"
+async def price_command(message: types.Message):
+    # Call the price function to get the cryptocurrency prices
+    prices_message = await price()
     
-    # Send the message
-    await message.answer(price_message, parse_mode="HTML")
+    # Send the message with cryptocurrency prices
+    await message.answer(prices_message, parse_mode="HTML")
 
+@dp.message(Command('donate'))
+async def donate_command(message: types.Message):
+    # Call the donate function to initiate the payment process
+    await donate(message, bot)
 
-
-async def news_every_minute():
-    while True:
-        fresh_news = check_news_update()
-
-        if len(fresh_news) >= 1:
-            print("Fresh news found:", fresh_news)  # Print fresh news for debugging
-            for k, v in sorted(fresh_news.items()):
-                formatted_date = datetime.datetime.fromtimestamp(v['article_date_timestamp']).strftime('%d.%m.%Y')
-                caption = f"<b>{formatted_date}</b>\n\n{hbold(v['article_title'])}\n\n{hlink('Read More', v['article_url'])}"
-                subscribers = db.get_subscriptions()
-                print("Subscribers:", subscribers)  # Print subscribers for debugging
-                for subscriber in subscribers:
-                    try:
-                        print("Sending message to:", subscriber[1])  # Print subscriber for debugging
-                        await bot.send_photo(subscriber[1], v['article_image'], caption=caption, disable_notification=False, parse_mode="HTML")
-                        print("Message sent successfully.")
-                    except Exception as e:
-                        print(f"Error sending message: {e}")
-
-        await asyncio.sleep(40)
+@dp.pre_checkout_query(lambda query: True)
+async def pre_checkout_query(pre_checkout_q: PreCheckoutQuery, bot:Bot):
+    await bot.answer_pre_checkout_query(pre_checkout_q.id, ok=True)
 
 
 async def main():
     loop = asyncio.get_event_loop()
-    loop.create_task(news_every_minute())
+    loop.create_task(news_every_minute(bot))
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
